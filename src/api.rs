@@ -6,7 +6,7 @@
 //! - Updating task completion status
 //! - Offline caching and sync logic
 
-use chrono::Local;
+use chrono::{Local, TimeZone};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Deserialize)]
