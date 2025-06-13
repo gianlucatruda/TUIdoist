@@ -31,6 +31,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+    // Fetch today's completed tasks
+    match client.get_todays_completed_tasks().await {
+        Ok(completed) => {
+            app_state.load_completed_tasks(completed);
+        }
+        Err(e) => {
+            eprintln!("Failed to fetch completed tasks: {}", e);
+        }
+    }
+
     // Initialize and run UI
     let mut ui = UI::new()?;
     ui.run(&mut app_state)?;

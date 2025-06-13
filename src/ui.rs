@@ -95,15 +95,46 @@ impl UI {
             .constraints([Constraint::Min(0), Constraint::Length(3)])
             .split(f.size());
 
-        // Render two sections for tasks
+        // Render three sections for tasks
         let task_area = chunks[0];
         let vertical_chunks = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Length(10), Constraint::Min(0)])
+            .constraints([Constraint::Length(10), Constraint::Length(10), Constraint::Min(0)])
             .split(task_area);
 
-        Self::render_tasks_section("Today", &app_state.tasks_due_today(), f, vertical_chunks[0], list_state, 0, app_state.selected_index);
-        Self::render_tasks_section("Upcoming", &app_state.tasks_upcoming(), f, vertical_chunks[1], list_state, app_state.tasks_due_today().len(), app_state.selected_index);
+        // Render "Today" active tasks
+        Self::render_tasks_section(
+            "Today",
+            &app_state.tasks_due_today(),
+            f,
+            vertical_chunks[0],
+            list_state,
+            0,
+            app_state.selected_index,
+        );
+
+        // Render "Completed Today" tasks. Here we convert completed_tasks into a Vec<&Task>.
+        let completed: Vec<&crate::api::Task> = app_state.completed_tasks.iter().collect();
+        Self::render_tasks_section(
+            "Completed Today",
+            &completed,
+            f,
+            vertical_chunks[1],
+            list_state,
+            app_state.tasks_due_today().len(),
+            app_state.selected_index,
+        );
+
+        // Render "Upcoming" tasks; offset is sum of today's active and completed.
+        Self::render_tasks_section(
+            "Upcoming",
+            &app_state.tasks_upcoming(),
+            f,
+            vertical_chunks[2],
+            list_state,
+            app_state.tasks_due_today().len() + app_state.completed_tasks.len(),
+            app_state.selected_index,
+        );
 
         // Render status bar
         Self::render_status_bar(f, chunks[1], app_state);

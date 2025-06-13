@@ -25,6 +25,7 @@ pub enum ChangeType {
 
 pub struct AppState {
     pub tasks: Vec<Task>,
+    pub completed_tasks: Vec<Task>,
     pub selected_index: usize,
     pub pending_changes: Vec<PendingChange>,
     pub search_query: String,
@@ -44,6 +45,7 @@ impl AppState {
     pub fn new() -> Self {
         Self {
             tasks: Vec::new(),
+            completed_tasks: Vec::new(),
             selected_index: 0,
             pending_changes: Vec::new(),
             search_query: String::new(),
@@ -56,6 +58,11 @@ impl AppState {
     pub fn load_tasks(&mut self, tasks: Vec<Task>) {
         self.tasks = tasks;
         self.selected_index = 0;
+    }
+
+    /// Load completed tasks into the application state
+    pub fn load_completed_tasks(&mut self, tasks: Vec<Task>) {
+        self.completed_tasks = tasks;
     }
 
     /// Move selection up
