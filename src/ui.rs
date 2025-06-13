@@ -170,11 +170,6 @@ impl UI {
                                 }
                             });
                         }
-                        KeyCode::Char('/') => {
-                            let mut state = app_state.lock().await;
-                            state.start_search();
-                            // TODO: Implement search input mode
-                        }
                         KeyCode::Esc => {
                             let mut state = app_state.lock().await;
                             if state.is_searching {
@@ -299,7 +294,7 @@ impl UI {
             crate::state::SyncStatus::Online => "Online".to_string(),
             crate::state::SyncStatus::Offline => "Offline".to_string(),
             crate::state::SyncStatus::Syncing => format!("{} Syncing...", spinner_frame()),
-            crate::state::SyncStatus::Error(e) => format!("Error: {}", e),
+            crate::state::SyncStatus::Error(e) => format!("ERR: {}", e),
         };
 
         let search_text = if app_state.is_searching {
@@ -309,7 +304,7 @@ impl UI {
         };
 
         let content = format!(
-            "Status: {}{} | Tasks: {} | q:quit, r:refresh, j/k:move, space:toggle, /:search",
+            "Status: {}{} | Tasks: {} | q: quit, r: refresh, j/k: move, space: (un)check",
             status_text,
             search_text,
             app_state.tasks.len()
