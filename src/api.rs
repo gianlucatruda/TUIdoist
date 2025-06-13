@@ -98,7 +98,9 @@ impl TodoistClient {
         let url = format!("{}/tasks/completed/by_completion_date", self.base_url);
         let today = Local::now().date();
         let start = today.and_hms_opt(0, 0, 0).unwrap();
-        let end = (today + chrono::Duration::days(1)).and_hms_opt(0, 0, 0).unwrap(); // tomorrow 00:00:00
+        let end = (today + chrono::Duration::days(1))
+            .and_hms_opt(0, 0, 0)
+            .unwrap(); // tomorrow 00:00:00
         let since = start.to_rfc3339();
         let until = end.to_rfc3339();
 

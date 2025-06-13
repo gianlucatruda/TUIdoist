@@ -220,7 +220,6 @@ impl UI {
             &app_state.today_tasks(),
             f,
             vertical_chunks[0],
-            list_state,
             0,
             app_state.selected_index,
         );
@@ -231,7 +230,6 @@ impl UI {
             &app_state.tasks_upcoming(),
             f,
             vertical_chunks[1],
-            list_state,
             app_state.today_tasks().len(),
             app_state.selected_index,
         );
@@ -245,7 +243,6 @@ impl UI {
         tasks: &[&crate::api::Task],
         f: &mut Frame,
         area: ratatui::layout::Rect,
-        _list_state: &mut ListState,
         offset: usize,
         global_selected_index: usize,
     ) {
