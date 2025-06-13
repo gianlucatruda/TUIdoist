@@ -59,7 +59,7 @@ impl UI {
     }
 
     /// Main UI loop - handles events and rendering
-    pub fn run(&mut self, app_state: &mut AppState) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn run(&mut self, app_state: &mut crate::state::AppState, client: &crate::api::TodoistClient) -> Result<(), Box<dyn std::error::Error>> {
         loop {
             // Update list state to match app state
             self.list_state.select(Some(app_state.selected_index));
@@ -82,6 +82,28 @@ impl UI {
                             app_state.go_to_top();
                         }
                         KeyCode::Char(' ') => app_state.toggle_selected_task(),
+                        KeyCode::Char('r') => {
+                            // Refresh today's active tasks:
+                            match client.get_todays_tasks().await {
+                                Ok(tasks) => {
+                                    app_state.load_tasks(tasks);
+                                    app_state.sync_status = crate::state::SyncStatus::Online;
+                                }
+                                Err(e) => {
+                                    eprintln!("Error refreshing tasks: {}", e);
+                                    app_state.sync_status = crate::state::SyncStatus::Error(e.to_string());
+                                }
+                            }
+                            // Refresh today's completed tasks:
+                            match client.get_todays_completed_tasks().await {
+                                Ok(completed) => {
+                                    app_state.load_completed_tasks(completed);
+                                }
+                                Err(e) => {
+                                    eprintln!("Error refreshing completed tasks: {}", e);
+                                }
+                            }
+                        }
                         KeyCode::Char('/') => {
                             app_state.start_search();
                             // TODO: Implement search input mode
@@ -219,7 +241,7 @@ impl UI {
         };
 
         let content = format!(
-            "Status: {}{} | Tasks: {} | q:quit j/k:move space:toggle /:search",
+            "Status: {}{} | Tasks: {} | q:quit, r:refresh, j/k:move, space:toggle, /:search",
             status_text,
             search_text,
             app_state.tasks.len()

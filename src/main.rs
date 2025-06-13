@@ -43,7 +43,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Initialize and run UI
     let mut ui = UI::new()?;
-    ui.run(&mut app_state)?;
+    ui.run(&mut app_state, &client).await?;
 
     Ok(())
 }
