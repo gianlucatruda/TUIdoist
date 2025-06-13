@@ -53,7 +53,9 @@ impl TodoistClient {
     }
 
     /// Fetch today's tasks from the Todoist API
-    pub async fn get_todays_tasks(&self) -> Result<Vec<Task>, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_todays_tasks(
+        &self,
+    ) -> Result<Vec<Task>, Box<dyn std::error::Error + Send + Sync>> {
         let url = format!("{}/tasks", self.base_url);
 
         // Log the URL and query parameters

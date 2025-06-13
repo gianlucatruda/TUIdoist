@@ -12,7 +12,6 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use tokio::time::{timeout, Duration};
 use ratatui::{
     backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout},
@@ -28,8 +27,10 @@ fn spinner_frame() -> &'static str {
     // Define a simple spinner with 4 frames.
     let frames = ["⠋", "⠙", "⠹", "⠸"];
     // Determine current frame based on system time.
-    let millis = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)
-        .unwrap().as_millis();
+    let millis = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_millis();
     let index = (millis / 100) as usize % frames.len();
     frames[index]
 }
@@ -98,23 +99,23 @@ impl UI {
                         KeyCode::Char('j') | KeyCode::Down => {
                             let mut state = app_state.lock().await;
                             state.move_down();
-                        },
+                        }
                         KeyCode::Char('k') | KeyCode::Up => {
                             let mut state = app_state.lock().await;
                             state.move_up();
-                        },
+                        }
                         KeyCode::Char('G') => {
                             let mut state = app_state.lock().await;
                             state.go_to_bottom();
-                        },
+                        }
                         KeyCode::Char('g') => {
                             let mut state = app_state.lock().await;
                             state.go_to_top();
-                        },
+                        }
                         KeyCode::Char(' ') => {
                             let mut state = app_state.lock().await;
                             state.toggle_selected_task();
-                        },
+                        }
                         KeyCode::Char('r') => {
                             {
                                 // Immediately mark state as syncing
@@ -131,12 +132,14 @@ impl UI {
                                 let active_result = timeout(
                                     Duration::from_secs(5),
                                     client_clone.get_todays_tasks(),
-                                ).await;
+                                )
+                                .await;
                                 // Refresh completed tasks with timeout
                                 let completed_result = timeout(
                                     Duration::from_secs(5),
                                     client_clone.get_todays_completed_tasks(),
-                                ).await;
+                                )
+                                .await;
                                 let mut state = app_state_clone.lock().await;
                                 match active_result {
                                     Ok(Ok(tasks)) => {
@@ -145,11 +148,13 @@ impl UI {
                                     }
                                     Ok(Err(e)) => {
                                         eprintln!("Error refreshing tasks: {}", e);
-                                        state.sync_status = crate::state::SyncStatus::Error(e.to_string());
+                                        state.sync_status =
+                                            crate::state::SyncStatus::Error(e.to_string());
                                     }
                                     Err(_) => {
                                         eprintln!("Refresh tasks timed out");
-                                        state.sync_status = crate::state::SyncStatus::Error("Timeout".to_string());
+                                        state.sync_status =
+                                            crate::state::SyncStatus::Error("Timeout".to_string());
                                     }
                                 }
                                 match completed_result {
@@ -164,18 +169,18 @@ impl UI {
                                     }
                                 }
                             });
-                        },
+                        }
                         KeyCode::Char('/') => {
                             let mut state = app_state.lock().await;
                             state.start_search();
                             // TODO: Implement search input mode
-                        },
+                        }
                         KeyCode::Esc => {
                             let mut state = app_state.lock().await;
                             if state.is_searching {
                                 state.end_search();
                             }
-                        },
+                        }
                         _ => {}
                     }
                 }

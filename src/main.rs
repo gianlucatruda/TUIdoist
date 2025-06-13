@@ -5,9 +5,9 @@ mod ui;
 use api::TodoistClient;
 use dotenv::dotenv;
 use state::AppState;
-use ui::UI;
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use ui::UI;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -20,7 +20,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let client = TodoistClient::new(api_token);
     let client = Arc::new(client);
-    
+
     let app_state = AppState::new();
     let app_state = Arc::new(Mutex::new(app_state));
 
