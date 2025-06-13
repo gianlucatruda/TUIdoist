@@ -80,34 +80,32 @@ impl AppState {
 
     /// Given a global index (in the unified today view), toggle the corresponding task.
     pub fn toggle_task_at_index(&mut self, global_index: usize) {
-        // Create an owned vector of task IDs from the unified today view.
-        let unified_ids: Vec<String> = self.today_tasks()
-            .iter()
-            .map(|t| t.id.clone())
-            .collect();
+        // First, compute the unified list of tasks (active and completed) and clone their IDs.
+        let unified_ids: Vec<String> = {
+            // The block ends immediately after generating the vector, dropping the borrow.
+            let unified = self.today_tasks();
+            unified.into_iter().map(|t| t.id.clone()).collect()
+        };
+
+        // Check that the global index is within bounds.
         if let Some(selected_id) = unified_ids.get(global_index) {
-            // Update the task in the active task list first. If not found, check completed.
-            if let Some(task) = self.tasks.iter_mut().find(|t| t.id == *selected_id) {
-                task.is_completed = !task.is_completed;
-            } else if let Some(task) = self.completed_tasks.iter_mut().find(|t| t.id == *selected_id) {
-                task.is_completed = !task.is_completed;
-            }
-            // Determine the new change type by checking the task's new state.
-            // Note that we re-find the task from one of the lists.
-            let change_type = if let Some(task) = self.tasks.iter().find(|t| t.id == *selected_id) {
-                if task.is_completed {
-                    ChangeType::Complete
-                } else {
-                    ChangeType::Uncomplete
+            {
+                // Now toggle the task in the active list first.
+                if let Some(task) = self.tasks.iter_mut().find(|t| t.id == *selected_id) {
+                    task.is_completed = !task.is_completed;
+                } else if let Some(task) = self.completed_tasks.iter_mut().find(|t| t.id == *selected_id) {
+                    task.is_completed = !task.is_completed;
                 }
-            } else if let Some(task) = self.completed_tasks.iter().find(|t| t.id == *selected_id) {
-                if task.is_completed {
-                    ChangeType::Complete
-                } else {
-                    ChangeType::Uncomplete
-                }
+            } // Immutable borrow has ended.
+
+            // Determine the new change type by checking the (updated) task.
+            let change_type = if self.tasks.iter().find(|t| t.id == *selected_id)
+                .map(|t| t.is_completed)
+                .unwrap_or(false)
+            {
+                ChangeType::Complete
             } else {
-                ChangeType::Uncomplete // default if no task is found
+                ChangeType::Uncomplete
             };
 
             self.pending_changes.push(PendingChange {
