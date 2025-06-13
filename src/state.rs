@@ -10,19 +10,20 @@ use crate::api::Task;
 use chrono::{DateTime, Local, NaiveDate};
 use std::time::{Duration, Instant};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PendingChange {
     pub task_id: String,
     pub change_type: ChangeType,
     pub timestamp: Instant,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ChangeType {
     Complete,
     Uncomplete,
 }
 
+#[derive(Clone)]
 pub struct AppState {
     pub tasks: Vec<Task>,
     pub completed_tasks: Vec<Task>,
@@ -33,7 +34,7 @@ pub struct AppState {
     pub sync_status: SyncStatus,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum SyncStatus {
     Online,
     Offline,

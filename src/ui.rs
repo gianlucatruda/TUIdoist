@@ -85,11 +85,14 @@ impl UI {
                 self.list_state.select(Some(state.selected_index));
             }
 
-            // Render
+            // Render using a nonblocking try_lock snapshot, so that UI always refreshes
             self.terminal.draw(|f| {
-                // For rendering, obtain a lock snapshot
-                let state = futures::executor::block_on(app_state.lock());
-                Self::render_ui(&mut self.list_state, f, &state);
+                let state_copy = if let Ok(guard) = app_state.try_lock() {
+                    guard.clone()
+                } else {
+                    AppState::new()
+                };
+                Self::render_ui(&mut self.list_state, f, &state_copy);
             })?;
 
             // Handle input with timeout polling
