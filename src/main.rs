@@ -5,9 +5,11 @@ mod state;
 use api::TodoistClient;
 use state::AppState;
 use ui::UI;
+use dotenv::dotenv;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    dotenv().ok(); // Load environment variables from .env (ignore errors)
     env_logger::init();
     
     // TODO: Get API token from environment or config
