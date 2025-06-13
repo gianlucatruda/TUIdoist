@@ -95,17 +95,17 @@ impl UI {
             .constraints([Constraint::Min(0), Constraint::Length(3)])
             .split(f.size());
 
-        // Render three sections for tasks
+        // Render two sections for tasks
         let task_area = chunks[0];
         let vertical_chunks = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Length(10), Constraint::Length(10), Constraint::Min(0)])
+            .constraints([Constraint::Length(10), Constraint::Min(0)])
             .split(task_area);
 
-        // Render "Today" active tasks
+        // Render merged "Today" tasks (active + completed)
         Self::render_tasks_section(
             "Today",
-            &app_state.tasks_due_today(),
+            &app_state.today_tasks(),
             f,
             vertical_chunks[0],
             list_state,
@@ -113,26 +113,14 @@ impl UI {
             app_state.selected_index,
         );
 
-        // Render "Completed Today" tasks. Here we convert completed_tasks into a Vec<&Task>.
-        let completed: Vec<&crate::api::Task> = app_state.completed_tasks.iter().collect();
-        Self::render_tasks_section(
-            "Completed Today",
-            &completed,
-            f,
-            vertical_chunks[1],
-            list_state,
-            app_state.tasks_due_today().len(),
-            app_state.selected_index,
-        );
-
-        // Render "Upcoming" tasks; offset is sum of today's active and completed.
+        // Render Upcoming tasks; offset equals the count of today_tasks
         Self::render_tasks_section(
             "Upcoming",
             &app_state.tasks_upcoming(),
             f,
-            vertical_chunks[2],
+            vertical_chunks[1],
             list_state,
-            app_state.tasks_due_today().len() + app_state.completed_tasks.len(),
+            app_state.today_tasks().len(),
             app_state.selected_index,
         );
 

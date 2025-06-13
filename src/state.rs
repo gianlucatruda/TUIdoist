@@ -62,7 +62,14 @@ impl AppState {
 
     /// Load completed tasks into the application state
     pub fn load_completed_tasks(&mut self, tasks: Vec<Task>) {
-        self.completed_tasks = tasks;
+        // Force each completed task's is_completed flag to true.
+        self.completed_tasks = tasks
+            .into_iter()
+            .map(|mut t| {
+                t.is_completed = true;
+                t
+            })
+            .collect();
     }
 
     /// Move selection up
@@ -202,5 +209,13 @@ impl AppState {
                 true
             }
         }).collect()
+    }
+
+    pub fn today_tasks(&self) -> Vec<&Task> {
+        let mut combined = self.tasks_due_today();
+        combined.extend(self.completed_tasks.iter());
+        // Optionally sort so that active tasks appear first
+        combined.sort_by_key(|task| task.is_completed);
+        combined
     }
 }
