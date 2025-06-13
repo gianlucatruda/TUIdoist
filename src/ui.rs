@@ -118,8 +118,21 @@ impl UI {
                                 state.go_to_top();
                             }
                             KeyCode::Char(' ') => {
-                                let mut state = app_state.lock().await;
-                                state.toggle_task_at_index(state.selected_index);
+                                // First, obtain a snapshot of the unified today view and extract the selected task ID.
+                                let selected_id_opt = {
+                                    let state = app_state.lock().await;
+                                    let unified_ids: Vec<String> = state.today_tasks()
+                                        .into_iter()
+                                        .map(|t| t.id.clone())
+                                        .collect();
+                                    unified_ids.get(state.selected_index).cloned()
+                                };
+
+                                // If a task id was found, lock mutably and toggle that task.
+                                if let Some(selected_id) = selected_id_opt {
+                                    let mut state = app_state.lock().await;
+                                    state.toggle_task_by_id(&selected_id);
+                                }
                             }
                             KeyCode::Char('r') => {
                                 {
