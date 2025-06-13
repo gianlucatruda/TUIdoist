@@ -96,8 +96,7 @@ impl TodoistClient {
     ) -> Result<Vec<Task>, Box<dyn std::error::Error + Send + Sync>> {
         // Use the completed-by-completion-date endpoint.
         let url = format!("{}/tasks/completed/by_completion_date", self.base_url);
-        let today = Local::now().date();
-        // let today = Local::now().date_naive();
+        let today = Local::now().date_naive();
         let start = today.and_hms_opt(0, 0, 0).unwrap();
         let end = (today + chrono::Duration::days(1))
             .and_hms_opt(0, 0, 0)
