@@ -6,7 +6,6 @@
 //! - Beautiful terminal interface
 //! - Responsive user interactions
 
-use crate::api::Task;
 use crate::state::AppState;
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
@@ -15,7 +14,7 @@ use crossterm::{
 };
 use ratatui::{
     backend::CrosstermBackend,
-    layout::{Constraint, Direction, Layout, Margin},
+    layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, List, ListItem, ListState, Paragraph},
@@ -110,13 +109,13 @@ impl UI {
         app_state: &AppState,
     ) {
         let tasks = app_state.get_filtered_tasks();
-        
+
         let items: Vec<ListItem> = tasks
             .iter()
             .map(|task| {
                 let status_symbol = if task.is_completed { "✓" } else { " " };
                 let content = format!("[{}] {}", status_symbol, task.content);
-                
+
                 let style = if task.is_completed {
                     Style::default()
                         .fg(Color::DarkGray)
@@ -133,12 +132,12 @@ impl UI {
             .block(
                 Block::default()
                     .borders(Borders::ALL)
-                    .title("Today's Tasks")
+                    .title("Today's Tasks"),
             )
             .highlight_style(
                 Style::default()
                     .bg(Color::Blue)
-                    .add_modifier(Modifier::BOLD)
+                    .add_modifier(Modifier::BOLD),
             )
             .highlight_symbol("> ");
 
@@ -166,8 +165,7 @@ impl UI {
             app_state.tasks.len()
         );
 
-        let paragraph = Paragraph::new(content)
-            .block(Block::default().borders(Borders::ALL));
+        let paragraph = Paragraph::new(content).block(Block::default().borders(Borders::ALL));
 
         f.render_widget(paragraph, area);
     }
