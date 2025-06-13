@@ -8,14 +8,6 @@
 
 use crate::api::Task;
 use chrono::{DateTime, Local, NaiveDate};
-use std::time::{Duration, Instant};
-
-#[derive(Debug, Clone)]
-pub struct PendingChange {
-    pub task_id: String,
-    pub change_type: ChangeType,
-    pub timestamp: Instant,
-}
 
 #[derive(Debug, Clone)]
 pub enum ChangeType {
@@ -28,7 +20,6 @@ pub struct AppState {
     pub tasks: Vec<Task>,
     pub completed_tasks: Vec<Task>,
     pub selected_index: usize,
-    pub pending_changes: Vec<PendingChange>,
     pub search_query: String,
     pub is_searching: bool,
     pub sync_status: SyncStatus,
@@ -48,7 +39,6 @@ impl AppState {
             tasks: Vec::new(),
             completed_tasks: Vec::new(),
             selected_index: 0,
-            pending_changes: Vec::new(),
             search_query: String::new(),
             is_searching: false,
             sync_status: SyncStatus::Offline,
@@ -90,23 +80,6 @@ impl AppState {
         {
             task.is_completed = !task.is_completed;
         }
-
-        // Determine the new change type from the updated state.
-        let change_type = if self
-            .tasks
-            .iter()
-            .any(|t| t.id == selected_id && t.is_completed)
-        {
-            ChangeType::Complete
-        } else {
-            ChangeType::Uncomplete
-        };
-
-        self.pending_changes.push(PendingChange {
-            task_id: selected_id.to_string(),
-            change_type,
-            timestamp: Instant::now(),
-        });
     }
 
     /// Move selection up within the unified today list.
@@ -133,56 +106,6 @@ impl AppState {
         let count = self.unified_today_count();
         if count > 0 {
             self.selected_index = count - 1;
-        }
-    }
-
-    /// Get changes that are ready to sync (older than 30 seconds)
-    pub fn get_ready_to_sync(&self) -> Vec<&PendingChange> {
-        let threshold = Duration::from_secs(30);
-        let now = Instant::now();
-
-        self.pending_changes
-            .iter()
-            .filter(|change| now.duration_since(change.timestamp) >= threshold)
-            .collect()
-    }
-
-    /// Remove synced changes from pending list
-    pub fn mark_synced(&mut self, task_ids: &[String]) {
-        self.pending_changes
-            .retain(|change| !task_ids.contains(&change.task_id));
-    }
-
-    /// Start search mode
-    pub fn start_search(&mut self) {
-        self.is_searching = true;
-        self.search_query.clear();
-    }
-
-    /// End search mode
-    pub fn end_search(&mut self) {
-        self.is_searching = false;
-        self.search_query.clear();
-    }
-
-    /// Update search query
-    pub fn update_search(&mut self, query: String) {
-        self.search_query = query;
-    }
-
-    /// Get filtered tasks based on search query
-    pub fn get_filtered_tasks(&self) -> Vec<&Task> {
-        if self.search_query.is_empty() {
-            self.tasks.iter().collect()
-        } else {
-            self.tasks
-                .iter()
-                .filter(|task| {
-                    task.content
-                        .to_lowercase()
-                        .contains(&self.search_query.to_lowercase())
-                })
-                .collect()
         }
     }
 

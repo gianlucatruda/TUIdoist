@@ -189,12 +189,6 @@ impl UI {
                                     }
                                 });
                             }
-                            KeyCode::Esc => {
-                                let mut state = app_state.lock().await;
-                                if state.is_searching {
-                                    state.end_search();
-                                }
-                            }
                             _ => {}
                         }
                     }

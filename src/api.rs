@@ -12,7 +12,6 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Deserialize)]
 struct TasksResponse {
     results: Vec<Task>,
-    next_cursor: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -127,7 +126,6 @@ impl TodoistClient {
         #[derive(Debug, Deserialize)]
         struct CompletedTasksResponse {
             items: Vec<Task>,
-            next_cursor: Option<String>,
         }
         let comp_resp: CompletedTasksResponse = response.json().await?;
         log::debug!("Fetched {} completed tasks", comp_resp.items.len());
