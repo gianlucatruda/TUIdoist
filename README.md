@@ -10,9 +10,10 @@
 
 ## Roadmap
 
-- [ ] Pull today's tasks from Todoist API in structured format
-- [ ] Display today's tasks (uncompleted) as a list in the terminal with Ratatui
-- [ ] Display today's already-completed tasks alongside active tasks 
+- [x] Pull tasks from Todoist API in structured format
+- [x] Display tasks as a list in the terminal with Ratatui
+- [ ] Pull _today_'s tasks from Todoist API in structured format
+- [ ] Display today's already-completed tasks (all tasks completed today) alongside active tasks 
 - [ ] Support for markdown and URLs being rendered nicely by UI
 - [ ] Ability to reorganise task order (not synced to API, local only)
 - [ ] Basic task completion functionality (cached for 30 seconds before attempting to sync up to Todoist API, with easy undo)
