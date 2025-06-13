@@ -59,7 +59,11 @@ impl UI {
     }
 
     /// Main UI loop - handles events and rendering
-    pub async fn run(&mut self, app_state: &mut crate::state::AppState, client: &crate::api::TodoistClient) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn run(
+        &mut self,
+        app_state: &mut crate::state::AppState,
+        client: &crate::api::TodoistClient,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         loop {
             // Update list state to match app state
             self.list_state.select(Some(app_state.selected_index));
@@ -91,7 +95,8 @@ impl UI {
                                 }
                                 Err(e) => {
                                     eprintln!("Error refreshing tasks: {}", e);
-                                    app_state.sync_status = crate::state::SyncStatus::Error(e.to_string());
+                                    app_state.sync_status =
+                                        crate::state::SyncStatus::Error(e.to_string());
                                 }
                             }
                             // Refresh today's completed tasks:
