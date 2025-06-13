@@ -8,6 +8,8 @@ use ui::UI;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    env_logger::init();
+    
     // TODO: Get API token from environment or config
     let api_token = std::env::var("TODOIST_API_TOKEN")
         .unwrap_or_else(|_| "placeholder_token".to_string());

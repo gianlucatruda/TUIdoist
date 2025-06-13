@@ -49,6 +49,9 @@ impl TodoistClient {
         let today = Local::now().format("%Y-%m-%d").to_string();
         let url = format!("{}/tasks", self.base_url);
         
+        // Log the URL and query parameters
+        log::debug!("Sending GET request to {} with query filter=due date: {}", url, today);
+        
         let response = self.client
             .get(&url)
             .header("Authorization", format!("Bearer {}", self.api_token))
@@ -56,11 +59,17 @@ impl TodoistClient {
             .send()
             .await?;
 
+        // Log the status code
+        log::debug!("Response HTTP status: {}", response.status());
+
         if !response.status().is_success() {
-            return Err(format!("API request failed with status: {}", response.status()).into());
+            let error_text = response.text().await.unwrap_or_else(|_| "No body".to_string());
+            log::error!("Error response body: {}", error_text);
+            return Err(format!("API request failed with status: {} - {}", response.status(), error_text).into());
         }
 
         let tasks: Vec<Task> = response.json().await?;
+        log::debug!("Retrieved {} tasks", tasks.len());
         Ok(tasks)
     }
 
