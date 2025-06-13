@@ -119,7 +119,7 @@ impl UI {
                             }
                             KeyCode::Char(' ') => {
                                 let mut state = app_state.lock().await;
-                                state.toggle_selected_task();
+                                state.toggle_task_at_index(state.selected_index);
                             }
                             KeyCode::Char('r') => {
                                 {

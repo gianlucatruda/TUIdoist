@@ -73,47 +73,61 @@ impl AppState {
             .collect();
     }
 
-    /// Move selection up
+    /// Returns the number of tasks in the unified today view.
+    pub fn unified_today_count(&self) -> usize {
+        self.today_tasks().len()
+    }
+
+    /// Given a global index (in the unified today view), toggle the corresponding task.
+    pub fn toggle_task_at_index(&mut self, global_index: usize) {
+        let unified = self.today_tasks();
+        if let Some(selected_task) = unified.get(global_index) {
+            // Try to update in active tasks.
+            if let Some(task) = self.tasks.iter_mut().find(|t| t.id == selected_task.id) {
+                task.is_completed = !task.is_completed;
+            } else if let Some(task) =
+                self.completed_tasks.iter_mut().find(|t| t.id == selected_task.id)
+            {
+                task.is_completed = !task.is_completed;
+            }
+            // Add pending change.
+            let change_type = if selected_task.is_completed {
+                ChangeType::Complete
+            } else {
+                ChangeType::Uncomplete
+            };
+            self.pending_changes.push(PendingChange {
+                task_id: selected_task.id.clone(),
+                change_type,
+                timestamp: Instant::now(),
+            });
+        }
+    }
+
+    /// Move selection up within the unified today list.
     pub fn move_up(&mut self) {
         if self.selected_index > 0 {
             self.selected_index -= 1;
         }
     }
 
-    /// Move selection down
+    /// Move selection down within the unified today list.
     pub fn move_down(&mut self) {
-        if self.selected_index < self.tasks.len().saturating_sub(1) {
+        if self.selected_index + 1 < self.unified_today_count() {
             self.selected_index += 1;
         }
     }
 
-    /// Go to top of list
+    /// Set selection to the top (index 0) of the unified today list.
     pub fn go_to_top(&mut self) {
         self.selected_index = 0;
     }
 
-    /// Go to bottom of list
+    /// Set selection to the bottom of the unified today list.
     pub fn go_to_bottom(&mut self) {
-        self.selected_index = self.tasks.len().saturating_sub(1);
-    }
-
-    /// Toggle completion status of selected task
-    pub fn toggle_selected_task(&mut self) {
-        if let Some(task) = self.tasks.get_mut(self.selected_index) {
-            task.is_completed = !task.is_completed;
-
-            // Add to pending changes for sync
-            let change_type = if task.is_completed {
-                ChangeType::Complete
-            } else {
-                ChangeType::Uncomplete
-            };
-
-            self.pending_changes.push(PendingChange {
-                task_id: task.id.clone(),
-                change_type,
-                timestamp: Instant::now(),
-            });
+        let count = self.unified_today_count();
+        if count > 0 {
+            self.selected_index = count - 1;
         }
     }
 
