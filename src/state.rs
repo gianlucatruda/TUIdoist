@@ -111,7 +111,7 @@ impl AppState {
 
     /// Returns tasks whose due date equals today.
     pub fn tasks_due_today(&self) -> Vec<&Task> {
-        let today = Local::today().naive_local();
+        let today = Local::now().naive_local().date();
         self.tasks
             .iter()
             .filter(|task| {
@@ -124,7 +124,7 @@ impl AppState {
                     } else if due.date.contains('T') {
                         // Try to parse as a date-time from RFC3339.
                         if let Ok(dt) = DateTime::parse_from_rfc3339(&due.date) {
-                            return dt.with_timezone(&Local).date().naive_local() == today;
+                            return dt.with_timezone(&Local).date_naive() == today;
                         }
                     }
                 }
@@ -136,7 +136,7 @@ impl AppState {
     /// Returns tasks that are NOT due today.
     /// Tasks with no due date are considered upcoming.
     pub fn tasks_upcoming(&self) -> Vec<&Task> {
-        let today = Local::today().naive_local();
+        let today = Local::now().naive_local().date();
         self.tasks
             .iter()
             .filter(|task| {
@@ -147,7 +147,7 @@ impl AppState {
                         }
                     } else if due.date.contains('T') {
                         if let Ok(dt) = DateTime::parse_from_rfc3339(&due.date) {
-                            return dt.with_timezone(&Local).date().naive_local() > today;
+                            return dt.with_timezone(&Local).date_naive() > today;
                         }
                     }
                     // If parsing fails, do not display in "today"

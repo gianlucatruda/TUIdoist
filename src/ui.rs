@@ -245,7 +245,7 @@ impl UI {
         tasks: &[&crate::api::Task],
         f: &mut Frame,
         area: ratatui::layout::Rect,
-        list_state: &mut ListState,
+        _list_state: &mut ListState,
         offset: usize,
         global_selected_index: usize,
     ) {
