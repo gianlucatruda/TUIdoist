@@ -25,9 +25,7 @@ use std::io;
 /// Minimal markdown parser: strips common markdown symbols and converts link syntax.
 fn parse_markdown(text: &str) -> String {
     // Remove bold & italic markers and underscores.
-    let mut cleaned = text.replace("**", "")
-                          .replace("*", "")
-                          .replace("_", "");
+    let mut cleaned = text.replace("**", "").replace("*", "").replace("_", "");
     // Very basic handling of markdown links: convert `[label](url)` into "label (url)"
     // This naive approach replaces "](" with ") (" and then removes the leading "[".
     cleaned = cleaned.replace("](", ") (");
@@ -172,7 +170,9 @@ impl UI {
 
                 let combined = format!("[{}] {}{}", status_symbol, content_md, desc_truncated);
                 let style = if task.is_completed {
-                    Style::default().fg(Color::DarkGray).add_modifier(Modifier::CROSSED_OUT)
+                    Style::default()
+                        .fg(Color::DarkGray)
+                        .add_modifier(Modifier::CROSSED_OUT)
                 } else {
                     Style::default()
                 };
