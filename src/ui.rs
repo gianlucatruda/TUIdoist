@@ -95,53 +95,62 @@ impl UI {
             .constraints([Constraint::Min(0), Constraint::Length(3)])
             .split(f.size());
 
-        // Render task list
-        Self::render_tasks(list_state, f, chunks[0], app_state);
+        // Render two sections for tasks
+        let task_area = chunks[0];
+        let vertical_chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Length(10), Constraint::Min(0)])
+            .split(task_area);
+
+        Self::render_tasks_section("Today", &app_state.tasks_due_today(), f, vertical_chunks[0], list_state, 0, app_state.selected_index);
+        Self::render_tasks_section("Upcoming", &app_state.tasks_upcoming(), f, vertical_chunks[1], list_state, app_state.tasks_due_today().len(), app_state.selected_index);
 
         // Render status bar
         Self::render_status_bar(f, chunks[1], app_state);
     }
 
-    fn render_tasks(
-        list_state: &mut ListState,
+    fn render_tasks_section(
+        title: &str,
+        tasks: &[&crate::api::Task],
         f: &mut Frame,
         area: ratatui::layout::Rect,
-        app_state: &AppState,
+        list_state: &mut ListState,
+        offset: usize,
+        global_selected_index: usize,
     ) {
-        let tasks = app_state.get_filtered_tasks();
-
         let items: Vec<ListItem> = tasks
             .iter()
             .map(|task| {
                 let status_symbol = if task.is_completed { "✓" } else { " " };
                 let content = format!("[{}] {}", status_symbol, task.content);
-
                 let style = if task.is_completed {
-                    Style::default()
-                        .fg(Color::DarkGray)
-                        .add_modifier(Modifier::CROSSED_OUT)
+                    Style::default().fg(Color::DarkGray).add_modifier(Modifier::CROSSED_OUT)
                 } else {
                     Style::default()
                 };
-
                 ListItem::new(Line::from(Span::styled(content, style)))
             })
             .collect();
 
+        // Compute local selection index for this section if needed:
+        let local_selected = if global_selected_index >= offset && global_selected_index < offset + tasks.len() {
+            Some(global_selected_index - offset)
+        } else {
+            None
+        };
+
+        // Create a temporary ListState for this section:
+        let mut section_state = ListState::default();
+        section_state.select(local_selected);
+
         let list = List::new(items)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("Today's Tasks"),
-            )
+            .block(Block::default().borders(Borders::ALL).title(title))
             .highlight_style(
-                Style::default()
-                    .bg(Color::Blue)
-                    .add_modifier(Modifier::BOLD),
+                Style::default().bg(Color::Blue).add_modifier(Modifier::BOLD),
             )
             .highlight_symbol("> ");
 
-        f.render_stateful_widget(list, area, list_state);
+        f.render_stateful_widget(list, area, &mut section_state);
     }
 
     fn render_status_bar(f: &mut Frame, area: ratatui::layout::Rect, app_state: &AppState) {

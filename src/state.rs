@@ -7,6 +7,7 @@
 //! - Undo functionality
 
 use crate::api::Task;
+use chrono::{Local, NaiveDate, DateTime};
 use std::time::{Duration, Instant};
 
 #[derive(Debug)]
@@ -149,5 +150,50 @@ impl AppState {
                 })
                 .collect()
         }
+    }
+
+    /// Returns tasks whose due date equals today.
+    pub fn tasks_due_today(&self) -> Vec<&Task> {
+        let today = Local::today().naive_local();
+        self.tasks.iter().filter(|task| {
+            if let Some(due) = &task.due {
+                // If due.date is in "YYYY-MM-DD" format:
+                if due.date.len() == 10 {
+                    if let Ok(d) = NaiveDate::parse_from_str(&due.date, "%Y-%m-%d") {
+                        return d == today;
+                    }
+                } else if due.date.contains('T') {
+                    // Try to parse as a date-time from RFC3339.
+                    if let Ok(dt) = DateTime::parse_from_rfc3339(&due.date) {
+                        return dt.with_timezone(&Local).date().naive_local() == today;
+                    }
+                }
+            }
+            false
+        }).collect()
+    }
+
+    /// Returns tasks that are NOT due today.
+    /// Tasks with no due date are considered upcoming.
+    pub fn tasks_upcoming(&self) -> Vec<&Task> {
+        let today = Local::today().naive_local();
+        self.tasks.iter().filter(|task| {
+            if let Some(due) = &task.due {
+                if due.date.len() == 10 {
+                    if let Ok(d) = NaiveDate::parse_from_str(&due.date, "%Y-%m-%d") {
+                        return d > today;
+                    }
+                } else if due.date.contains('T') {
+                    if let Ok(dt) = DateTime::parse_from_rfc3339(&due.date) {
+                        return dt.with_timezone(&Local).date().naive_local() > today;
+                    }
+                }
+                // If parsing fails, do not display in "today"
+                false
+            } else {
+                // No due date → upcoming
+                true
+            }
+        }).collect()
     }
 }
