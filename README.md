@@ -12,7 +12,7 @@
 
 - [x] Pull tasks from Todoist API in structured format
 - [x] Display tasks as a list in the terminal with Ratatui
-- [ ] Pull _today_'s tasks from Todoist API in structured format
+- [x] Pull _today_'s tasks from Todoist API in structured format
 - [ ] Display today's already-completed tasks (all tasks completed today) alongside active tasks 
 - [ ] Support for markdown and URLs being rendered nicely by UI
 - [ ] Ability to reorganise task order (not synced to API, local only)
