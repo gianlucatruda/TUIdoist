@@ -9,6 +9,12 @@
 use chrono::Local;
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone, Deserialize)]
+struct TasksResponse {
+    results: Vec<Task>,
+    next_cursor: Option<String>,
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Task {
     pub id: String,
@@ -79,8 +85,8 @@ impl TodoistClient {
             .into());
         }
 
-        let tasks: Vec<Task> = response.json().await?;
-        log::debug!("Retrieved {} tasks", tasks.len());
-        Ok(tasks)
+        let tasks_resp: TasksResponse = response.json().await?;
+        log::debug!("Retrieved {} tasks", tasks_resp.results.len());
+        Ok(tasks_resp.results)
     }
 }
