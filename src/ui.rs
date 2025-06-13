@@ -12,7 +12,6 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use std::time::Duration;
 use ratatui::{
     backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout},
@@ -22,6 +21,7 @@ use ratatui::{
     Frame, Terminal,
 };
 use std::io;
+use std::time::Duration;
 
 /// Returns a spinner frame using OSC 8. Uses a simple 4-frame spinner.
 fn spinner_frame() -> &'static str {
@@ -157,8 +157,9 @@ impl UI {
                                         }
                                         Err(_) => {
                                             eprintln!("Refresh tasks timed out");
-                                            state.sync_status =
-                                                crate::state::SyncStatus::Error("Timeout".to_string());
+                                            state.sync_status = crate::state::SyncStatus::Error(
+                                                "Timeout".to_string(),
+                                            );
                                         }
                                     }
                                     match completed_result {
