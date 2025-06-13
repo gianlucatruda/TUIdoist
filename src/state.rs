@@ -80,24 +80,38 @@ impl AppState {
 
     /// Given a global index (in the unified today view), toggle the corresponding task.
     pub fn toggle_task_at_index(&mut self, global_index: usize) {
-        let unified = self.today_tasks();
-        if let Some(selected_task) = unified.get(global_index) {
-            // Try to update in active tasks.
-            if let Some(task) = self.tasks.iter_mut().find(|t| t.id == selected_task.id) {
+        // Create an owned vector of task IDs from the unified today view.
+        let unified_ids: Vec<String> = self.today_tasks()
+            .iter()
+            .map(|t| t.id.clone())
+            .collect();
+        if let Some(selected_id) = unified_ids.get(global_index) {
+            // Update the task in the active task list first. If not found, check completed.
+            if let Some(task) = self.tasks.iter_mut().find(|t| t.id == *selected_id) {
                 task.is_completed = !task.is_completed;
-            } else if let Some(task) =
-                self.completed_tasks.iter_mut().find(|t| t.id == selected_task.id)
-            {
+            } else if let Some(task) = self.completed_tasks.iter_mut().find(|t| t.id == *selected_id) {
                 task.is_completed = !task.is_completed;
             }
-            // Add pending change.
-            let change_type = if selected_task.is_completed {
-                ChangeType::Complete
+            // Determine the new change type by checking the task's new state.
+            // Note that we re-find the task from one of the lists.
+            let change_type = if let Some(task) = self.tasks.iter().find(|t| t.id == *selected_id) {
+                if task.is_completed {
+                    ChangeType::Complete
+                } else {
+                    ChangeType::Uncomplete
+                }
+            } else if let Some(task) = self.completed_tasks.iter().find(|t| t.id == *selected_id) {
+                if task.is_completed {
+                    ChangeType::Complete
+                } else {
+                    ChangeType::Uncomplete
+                }
             } else {
-                ChangeType::Uncomplete
+                ChangeType::Uncomplete // default if no task is found
             };
+
             self.pending_changes.push(PendingChange {
-                task_id: selected_task.id.clone(),
+                task_id: selected_id.clone(),
                 change_type,
                 timestamp: Instant::now(),
             });
