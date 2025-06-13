@@ -101,8 +101,8 @@ impl TodoistClient {
         let end = (today + chrono::Duration::days(1))
             .and_hms_opt(0, 0, 0)
             .unwrap(); // tomorrow 00:00:00
-        let since: String = start.to_rfc3339();
-        let until: String = end.to_rfc3339();
+        let since: String = Local.from_local_datetime(&start).unwrap().to_rfc3339();
+        let until: String = Local.from_local_datetime(&end).unwrap().to_rfc3339();
 
         log::debug!("Fetching completed tasks from {} to {}", since, until);
 
