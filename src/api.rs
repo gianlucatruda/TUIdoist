@@ -59,13 +59,14 @@ impl TodoistClient {
             .send()
             .await?;
 
-        // Log the status code
-        log::debug!("Response HTTP status: {}", response.status());
+        // Store status code before consuming the response
+        let status = response.status();
+        log::debug!("Response HTTP status: {}", status);
 
-        if !response.status().is_success() {
+        if !status.is_success() {
             let error_text = response.text().await.unwrap_or_else(|_| "No body".to_string());
             log::error!("Error response body: {}", error_text);
-            return Err(format!("API request failed with status: {} - {}", response.status(), error_text).into());
+            return Err(format!("API request failed with status: {} - {}", status, error_text).into());
         }
 
         let tasks: Vec<Task> = response.json().await?;
