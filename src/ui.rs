@@ -22,6 +22,21 @@ use ratatui::{
 };
 use std::io;
 
+/// Minimal markdown parser: strips common markdown symbols and converts link syntax.
+fn parse_markdown(text: &str) -> String {
+    // Remove bold & italic markers and underscores.
+    let mut cleaned = text.replace("**", "")
+                          .replace("*", "")
+                          .replace("_", "");
+    // Very basic handling of markdown links: convert `[label](url)` into "label (url)"
+    // This naive approach replaces "](" with ") (" and then removes the leading "[".
+    cleaned = cleaned.replace("](", ") (");
+    if cleaned.starts_with('[') {
+        cleaned = cleaned[1..].to_string();
+    }
+    cleaned
+}
+
 pub struct UI {
     terminal: Terminal<CrosstermBackend<io::Stdout>>,
     list_state: ListState,
@@ -141,15 +156,27 @@ impl UI {
             .iter()
             .map(|task| {
                 let status_symbol = if task.is_completed { "✓" } else { " " };
-                let content = format!("[{}] {}", status_symbol, task.content);
+
+                // Process markdown from both content and description.
+                let content_md = parse_markdown(&task.content);
+                let desc_md = parse_markdown(&task.description);
+                let desc_truncated = if !desc_md.is_empty() {
+                    if desc_md.len() > 100 {
+                        format!(" - {}...", &desc_md[..100])
+                    } else {
+                        format!(" - {}", desc_md)
+                    }
+                } else {
+                    String::new()
+                };
+
+                let combined = format!("[{}] {}{}", status_symbol, content_md, desc_truncated);
                 let style = if task.is_completed {
-                    Style::default()
-                        .fg(Color::DarkGray)
-                        .add_modifier(Modifier::CROSSED_OUT)
+                    Style::default().fg(Color::DarkGray).add_modifier(Modifier::CROSSED_OUT)
                 } else {
                     Style::default()
                 };
-                ListItem::new(Line::from(Span::styled(content, style)))
+                ListItem::new(Line::from(Span::styled(combined, style)))
             })
             .collect();
 
