@@ -9,12 +9,6 @@
 use crate::api::Task;
 use chrono::{DateTime, Local, NaiveDate};
 
-#[derive(Debug, Clone)]
-pub enum ChangeType {
-    Complete,
-    Uncomplete,
-}
-
 #[derive(Clone)]
 pub struct AppState {
     pub tasks: Vec<Task>,

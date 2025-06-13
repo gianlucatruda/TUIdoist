@@ -92,7 +92,7 @@ impl UI {
                 } else {
                     AppState::new()
                 };
-                Self::render_ui(&mut self.list_state, f, &state_copy);
+                Self::render_ui(f, &state_copy);
             })?;
 
             // Handle input with timeout polling
@@ -201,7 +201,7 @@ impl UI {
         Ok(())
     }
 
-    fn render_ui(list_state: &mut ListState, f: &mut Frame, app_state: &AppState) {
+    fn render_ui(f: &mut Frame, app_state: &AppState) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Min(0), Constraint::Length(3)])
