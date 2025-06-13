@@ -54,10 +54,7 @@ impl TodoistClient {
         let url = format!("{}/tasks", self.base_url);
 
         // Log the URL and query parameters
-        log::debug!(
-            "Sending GET request to {} with query filter=today",
-            url
-        );
+        log::debug!("Sending GET request to {} with query filter=today", url);
 
         let response = self
             .client
@@ -90,7 +87,9 @@ impl TodoistClient {
     }
 
     /// Fetch today's completed tasks from the Todoist API
-    pub async fn get_todays_completed_tasks(&self) -> Result<Vec<Task>, Box<dyn std::error::Error>> {
+    pub async fn get_todays_completed_tasks(
+        &self,
+    ) -> Result<Vec<Task>, Box<dyn std::error::Error>> {
         // Use the completed-by-completion-date endpoint.
         let url = format!("{}/tasks/completed/by_completion_date", self.base_url);
         let today = Local::today();

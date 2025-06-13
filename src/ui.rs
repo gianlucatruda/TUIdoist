@@ -143,7 +143,9 @@ impl UI {
                 let status_symbol = if task.is_completed { "✓" } else { " " };
                 let content = format!("[{}] {}", status_symbol, task.content);
                 let style = if task.is_completed {
-                    Style::default().fg(Color::DarkGray).add_modifier(Modifier::CROSSED_OUT)
+                    Style::default()
+                        .fg(Color::DarkGray)
+                        .add_modifier(Modifier::CROSSED_OUT)
                 } else {
                     Style::default()
                 };
@@ -152,11 +154,12 @@ impl UI {
             .collect();
 
         // Compute local selection index for this section if needed:
-        let local_selected = if global_selected_index >= offset && global_selected_index < offset + tasks.len() {
-            Some(global_selected_index - offset)
-        } else {
-            None
-        };
+        let local_selected =
+            if global_selected_index >= offset && global_selected_index < offset + tasks.len() {
+                Some(global_selected_index - offset)
+            } else {
+                None
+            };
 
         // Create a temporary ListState for this section:
         let mut section_state = ListState::default();
@@ -165,7 +168,9 @@ impl UI {
         let list = List::new(items)
             .block(Block::default().borders(Borders::ALL).title(title))
             .highlight_style(
-                Style::default().bg(Color::Blue).add_modifier(Modifier::BOLD),
+                Style::default()
+                    .bg(Color::Blue)
+                    .add_modifier(Modifier::BOLD),
             )
             .highlight_symbol("> ");
 
