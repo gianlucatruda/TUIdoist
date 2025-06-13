@@ -20,6 +20,8 @@ pub struct Task {
     pub id: String,
     pub content: String,
     #[serde(default)]
+    pub description: String,
+    #[serde(default)]
     pub is_completed: bool,
     pub due: Option<Due>,
     pub priority: u8,
