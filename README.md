@@ -13,6 +13,7 @@
 - [ ] Pull today's tasks from Todoist API in structured format
 - [ ] Display today's tasks (uncompleted) as a list in the terminal with Ratatui
 - [ ] Display today's already-completed tasks alongside active tasks 
+- [ ] Support for markdown and URLs being rendered nicely by UI
 - [ ] Ability to reorganise task order (not synced to API, local only)
 - [ ] Basic task completion functionality (cached for 30 seconds before attempting to sync up to Todoist API, with easy undo)
 
@@ -20,5 +21,6 @@
 
 - Clean, modular, maintainable Rust. Focus on readability, simplicity, and best practices.
 - Safe Rust with minimal type masturbation.
+- Minimal complexity. Don't add new libraries or artefacts without direct permission. Default to implementing things from scratch.
 
 ---
