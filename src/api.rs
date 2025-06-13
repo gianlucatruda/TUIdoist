@@ -51,21 +51,19 @@ impl TodoistClient {
 
     /// Fetch today's tasks from the Todoist API
     pub async fn get_todays_tasks(&self) -> Result<Vec<Task>, Box<dyn std::error::Error>> {
-        let today = Local::now().format("%Y-%m-%d").to_string();
         let url = format!("{}/tasks", self.base_url);
 
         // Log the URL and query parameters
         log::debug!(
-            "Sending GET request to {} with query filter=due date: {}",
-            url,
-            today
+            "Sending GET request to {} with query filter=today",
+            url
         );
 
         let response = self
             .client
             .get(&url)
             .header("Authorization", format!("Bearer {}", self.api_token))
-            .query(&[("filter", format!("due date: {}", today))])
+            .query(&[("filter", "today")])
             .send()
             .await?;
 
