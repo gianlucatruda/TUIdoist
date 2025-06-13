@@ -12,6 +12,7 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use std::time::Duration;
 use ratatui::{
     backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout},
@@ -91,92 +92,93 @@ impl UI {
                 Self::render_ui(&mut self.list_state, f, &state);
             })?;
 
-            // Handle input
-            if let Event::Key(key) = event::read()? {
-                if key.kind == KeyEventKind::Press {
-                    match key.code {
-                        KeyCode::Char('q') => break,
-                        KeyCode::Char('j') | KeyCode::Down => {
-                            let mut state = app_state.lock().await;
-                            state.move_down();
-                        }
-                        KeyCode::Char('k') | KeyCode::Up => {
-                            let mut state = app_state.lock().await;
-                            state.move_up();
-                        }
-                        KeyCode::Char('G') => {
-                            let mut state = app_state.lock().await;
-                            state.go_to_bottom();
-                        }
-                        KeyCode::Char('g') => {
-                            let mut state = app_state.lock().await;
-                            state.go_to_top();
-                        }
-                        KeyCode::Char(' ') => {
-                            let mut state = app_state.lock().await;
-                            state.toggle_selected_task();
-                        }
-                        KeyCode::Char('r') => {
-                            {
-                                // Immediately mark state as syncing
+            // Handle input with timeout polling
+            if event::poll(Duration::from_millis(200))? {
+                if let Event::Key(key) = event::read()? {
+                    if key.kind == KeyEventKind::Press {
+                        match key.code {
+                            KeyCode::Char('q') => break,
+                            KeyCode::Char('j') | KeyCode::Down => {
                                 let mut state = app_state.lock().await;
-                                state.sync_status = crate::state::SyncStatus::Syncing;
+                                state.move_down();
                             }
-                            // Spawn a background task for refresh so UI rendering is not blocked
-                            let app_state_clone = app_state.clone();
-                            let client_clone = client.clone();
-                            tokio::spawn(async move {
-                                use tokio::time::timeout;
-                                use tokio::time::Duration;
-                                // Refresh active tasks with timeout
-                                let active_result = timeout(
-                                    Duration::from_secs(5),
-                                    client_clone.get_todays_tasks(),
-                                )
-                                .await;
-                                // Refresh completed tasks with timeout
-                                let completed_result = timeout(
-                                    Duration::from_secs(5),
-                                    client_clone.get_todays_completed_tasks(),
-                                )
-                                .await;
-                                let mut state = app_state_clone.lock().await;
-                                match active_result {
-                                    Ok(Ok(tasks)) => {
-                                        state.load_tasks(tasks);
-                                        state.sync_status = crate::state::SyncStatus::Online;
-                                    }
-                                    Ok(Err(e)) => {
-                                        eprintln!("Error refreshing tasks: {}", e);
-                                        state.sync_status =
-                                            crate::state::SyncStatus::Error(e.to_string());
-                                    }
-                                    Err(_) => {
-                                        eprintln!("Refresh tasks timed out");
-                                        state.sync_status =
-                                            crate::state::SyncStatus::Error("Timeout".to_string());
-                                    }
-                                }
-                                match completed_result {
-                                    Ok(Ok(completed)) => {
-                                        state.load_completed_tasks(completed);
-                                    }
-                                    Ok(Err(e)) => {
-                                        eprintln!("Error refreshing completed tasks: {}", e);
-                                    }
-                                    Err(_) => {
-                                        eprintln!("Refresh completed tasks timed out");
-                                    }
-                                }
-                            });
-                        }
-                        KeyCode::Esc => {
-                            let mut state = app_state.lock().await;
-                            if state.is_searching {
-                                state.end_search();
+                            KeyCode::Char('k') | KeyCode::Up => {
+                                let mut state = app_state.lock().await;
+                                state.move_up();
                             }
+                            KeyCode::Char('G') => {
+                                let mut state = app_state.lock().await;
+                                state.go_to_bottom();
+                            }
+                            KeyCode::Char('g') => {
+                                let mut state = app_state.lock().await;
+                                state.go_to_top();
+                            }
+                            KeyCode::Char(' ') => {
+                                let mut state = app_state.lock().await;
+                                state.toggle_selected_task();
+                            }
+                            KeyCode::Char('r') => {
+                                {
+                                    // Immediately mark state as syncing
+                                    let mut state = app_state.lock().await;
+                                    state.sync_status = crate::state::SyncStatus::Syncing;
+                                }
+                                // Spawn a background task for refresh so UI rendering is not blocked
+                                let app_state_clone = app_state.clone();
+                                let client_clone = client.clone();
+                                tokio::spawn(async move {
+                                    use tokio::time::{timeout, Duration};
+                                    // Refresh active tasks with timeout
+                                    let active_result = timeout(
+                                        Duration::from_secs(5),
+                                        client_clone.get_todays_tasks(),
+                                    )
+                                    .await;
+                                    // Refresh completed tasks with timeout
+                                    let completed_result = timeout(
+                                        Duration::from_secs(5),
+                                        client_clone.get_todays_completed_tasks(),
+                                    )
+                                    .await;
+                                    let mut state = app_state_clone.lock().await;
+                                    match active_result {
+                                        Ok(Ok(tasks)) => {
+                                            state.load_tasks(tasks);
+                                            state.sync_status = crate::state::SyncStatus::Online;
+                                        }
+                                        Ok(Err(e)) => {
+                                            eprintln!("Error refreshing tasks: {}", e);
+                                            state.sync_status =
+                                                crate::state::SyncStatus::Error(e.to_string());
+                                        }
+                                        Err(_) => {
+                                            eprintln!("Refresh tasks timed out");
+                                            state.sync_status =
+                                                crate::state::SyncStatus::Error("Timeout".to_string());
+                                        }
+                                    }
+                                    match completed_result {
+                                        Ok(Ok(completed)) => {
+                                            state.load_completed_tasks(completed);
+                                        }
+                                        Ok(Err(e)) => {
+                                            eprintln!("Error refreshing completed tasks: {}", e);
+                                        }
+                                        Err(_) => {
+                                            eprintln!("Refresh completed tasks timed out");
+                                        }
+                                    }
+                                });
+                            }
+                            KeyCode::Esc => {
+                                let mut state = app_state.lock().await;
+                                if state.is_searching {
+                                    state.end_search();
+                                }
+                            }
+                            _ => {}
                         }
-                        _ => {}
                     }
                 }
             }
