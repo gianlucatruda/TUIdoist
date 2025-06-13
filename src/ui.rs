@@ -12,6 +12,7 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use tokio::time::{timeout, Duration};
 use ratatui::{
     backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout},
@@ -21,6 +22,17 @@ use ratatui::{
     Frame, Terminal,
 };
 use std::io;
+
+/// Returns a spinner frame using OSC 8. Uses a simple 4-frame spinner.
+fn spinner_frame() -> &'static str {
+    // Define a simple spinner with 4 frames.
+    let frames = ["⠋", "⠙", "⠹", "⠸"];
+    // Determine current frame based on system time.
+    let millis = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)
+        .unwrap().as_millis();
+    let index = (millis / 100) as usize % frames.len();
+    frames[index]
+}
 
 /// Minimal markdown parser: strips common markdown symbols and converts link syntax.
 fn parse_markdown(text: &str) -> String {
@@ -87,25 +99,34 @@ impl UI {
                         }
                         KeyCode::Char(' ') => app_state.toggle_selected_task(),
                         KeyCode::Char('r') => {
-                            // Refresh today's active tasks:
-                            match client.get_todays_tasks().await {
-                                Ok(tasks) => {
+                            // Indicate refresh is starting.
+                            app_state.sync_status = crate::state::SyncStatus::Syncing;
+
+                            // Wrap active task refresh with timeout.
+                            match timeout(Duration::from_secs(5), client.get_todays_tasks()).await {
+                                Ok(Ok(tasks)) => {
                                     app_state.load_tasks(tasks);
                                     app_state.sync_status = crate::state::SyncStatus::Online;
                                 }
-                                Err(e) => {
+                                Ok(Err(e)) => {
                                     eprintln!("Error refreshing tasks: {}", e);
-                                    app_state.sync_status =
-                                        crate::state::SyncStatus::Error(e.to_string());
+                                    app_state.sync_status = crate::state::SyncStatus::Error(e.to_string());
+                                }
+                                Err(_) => {
+                                    eprintln!("Refresh tasks timed out");
+                                    app_state.sync_status = crate::state::SyncStatus::Error("Timeout".to_string());
                                 }
                             }
-                            // Refresh today's completed tasks:
-                            match client.get_todays_completed_tasks().await {
-                                Ok(completed) => {
+                            // Refresh completed tasks similarly.
+                            match timeout(Duration::from_secs(5), client.get_todays_completed_tasks()).await {
+                                Ok(Ok(completed)) => {
                                     app_state.load_completed_tasks(completed);
                                 }
-                                Err(e) => {
+                                Ok(Err(e)) => {
                                     eprintln!("Error refreshing completed tasks: {}", e);
+                                }
+                                Err(_) => {
+                                    eprintln!("Refresh completed tasks timed out");
                                 }
                             }
                         }
@@ -233,10 +254,10 @@ impl UI {
 
     fn render_status_bar(f: &mut Frame, area: ratatui::layout::Rect, app_state: &AppState) {
         let status_text = match &app_state.sync_status {
-            crate::state::SyncStatus::Online => "Online",
-            crate::state::SyncStatus::Offline => "Offline",
-            crate::state::SyncStatus::Syncing => "Syncing...",
-            crate::state::SyncStatus::Error(e) => e,
+            crate::state::SyncStatus::Online => "Online".to_string(),
+            crate::state::SyncStatus::Offline => "Offline".to_string(),
+            crate::state::SyncStatus::Syncing => format!("{} Syncing...", spinner_frame()),
+            crate::state::SyncStatus::Error(e) => format!("Error: {}", e),
         };
 
         let search_text = if app_state.is_searching {
