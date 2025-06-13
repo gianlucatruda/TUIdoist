@@ -16,9 +16,9 @@
 - [x] Display today's already-completed tasks (all tasks completed today) alongside active tasks 
 - [x] Support for task descriptions (as 100char-truncated text)
 - [x] Hit `r` to refresh (pull tasks from Todoist, update status)
+- [ ] Ability to reorder tasks (not synced to API, local only) with `shift+j` and `shift+k` to move currently selected task down/up.
 - [ ] Support for markdown URLs being rendered as rich hyperlinks
 - [ ] Support for basic markdown being rendered as corresponding rich text
-- [ ] Ability to reorder tasks (not synced to API, local only) with `shift+j` and `shift+k` to move currently selected task down/up.
 - [ ] Basic task completion functionality with spacebar (cached for 30 seconds before attempting to sync up to Todoist API, with easy undo)
 
 ## Dev rules

@@ -121,7 +121,8 @@ impl UI {
                                 // First, obtain a snapshot of the unified today view and extract the selected task ID.
                                 let selected_id_opt = {
                                     let state = app_state.lock().await;
-                                    let unified_ids: Vec<String> = state.today_tasks()
+                                    let unified_ids: Vec<String> = state
+                                        .today_tasks()
                                         .into_iter()
                                         .map(|t| t.id.clone())
                                         .collect();

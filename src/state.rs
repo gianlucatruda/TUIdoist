@@ -83,8 +83,10 @@ impl AppState {
         // Toggle in the active tasks list if found.
         if let Some(task) = self.tasks.iter_mut().find(|t| t.id == selected_id) {
             task.is_completed = !task.is_completed;
-        } else if let Some(task) =
-            self.completed_tasks.iter_mut().find(|t| t.id == selected_id)
+        } else if let Some(task) = self
+            .completed_tasks
+            .iter_mut()
+            .find(|t| t.id == selected_id)
         {
             task.is_completed = !task.is_completed;
         }
