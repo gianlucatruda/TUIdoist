@@ -53,7 +53,9 @@ impl UI {
             self.list_state.select(Some(app_state.selected_index));
 
             // Render
-            self.terminal.draw(|f| self.render_ui(f, app_state))?;
+            self.terminal.draw(|f| {
+                Self::render_ui(&mut self.list_state, f, app_state);
+            })?;
 
             // Handle input
             if let Event::Key(key) = event::read()? {
@@ -88,20 +90,25 @@ impl UI {
         Ok(())
     }
 
-    fn render_ui(&mut self, f: &mut Frame, app_state: &AppState) {
+    fn render_ui(list_state: &mut ListState, f: &mut Frame, app_state: &AppState) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Min(0), Constraint::Length(3)])
             .split(f.size());
 
         // Render task list
-        self.render_tasks(f, chunks[0], app_state);
+        Self::render_tasks(list_state, f, chunks[0], app_state);
 
         // Render status bar
-        self.render_status_bar(f, chunks[1], app_state);
+        Self::render_status_bar(f, chunks[1], app_state);
     }
 
-    fn render_tasks(&mut self, f: &mut Frame, area: ratatui::layout::Rect, app_state: &AppState) {
+    fn render_tasks(
+        list_state: &mut ListState,
+        f: &mut Frame,
+        area: ratatui::layout::Rect,
+        app_state: &AppState,
+    ) {
         let tasks = app_state.get_filtered_tasks();
         
         let items: Vec<ListItem> = tasks
@@ -135,10 +142,10 @@ impl UI {
             )
             .highlight_symbol("> ");
 
-        f.render_stateful_widget(list, area, &mut self.list_state);
+        f.render_stateful_widget(list, area, list_state);
     }
 
-    fn render_status_bar(&self, f: &mut Frame, area: ratatui::layout::Rect, app_state: &AppState) {
+    fn render_status_bar(f: &mut Frame, area: ratatui::layout::Rect, app_state: &AppState) {
         let status_text = match &app_state.sync_status {
             crate::state::SyncStatus::Online => "Online",
             crate::state::SyncStatus::Offline => "Offline",
