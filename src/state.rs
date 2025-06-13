@@ -1,5 +1,5 @@
 //! Application state management
-//! 
+//!
 //! Handles:
 //! - Current task list and selection
 //! - Pending changes (for 30-second cache before sync)
@@ -85,14 +85,14 @@ impl AppState {
     pub fn toggle_selected_task(&mut self) {
         if let Some(task) = self.tasks.get_mut(self.selected_index) {
             task.is_completed = !task.is_completed;
-            
+
             // Add to pending changes for sync
             let change_type = if task.is_completed {
                 ChangeType::Complete
             } else {
                 ChangeType::Uncomplete
             };
-            
+
             self.pending_changes.push(PendingChange {
                 task_id: task.id.clone(),
                 change_type,
@@ -105,7 +105,7 @@ impl AppState {
     pub fn get_ready_to_sync(&self) -> Vec<&PendingChange> {
         let threshold = Duration::from_secs(30);
         let now = Instant::now();
-        
+
         self.pending_changes
             .iter()
             .filter(|change| now.duration_since(change.timestamp) >= threshold)
@@ -114,7 +114,8 @@ impl AppState {
 
     /// Remove synced changes from pending list
     pub fn mark_synced(&mut self, task_ids: &[String]) {
-        self.pending_changes.retain(|change| !task_ids.contains(&change.task_id));
+        self.pending_changes
+            .retain(|change| !task_ids.contains(&change.task_id));
     }
 
     /// Start search mode

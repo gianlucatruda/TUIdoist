@@ -7,7 +7,6 @@
 //! - Offline caching and sync logic
 
 use chrono::Local;
-use reqwest;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

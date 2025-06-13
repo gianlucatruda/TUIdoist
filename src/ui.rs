@@ -1,5 +1,5 @@
 //! Terminal UI module using Ratatui
-//! 
+//!
 //! Handles:
 //! - Rendering the task list
 //! - Vim-like keybindings (hjkl, G/gg, space, /)
@@ -25,15 +25,19 @@ impl UI {
         // - Handle keyboard input (hjkl, G/gg, space, /, q)
         // - Render task list
         // - Update app state based on user actions
-        
+
         println!("UI running... (placeholder)");
         println!("Tasks:");
         for (i, task) in app_state.tasks.iter().enumerate() {
             let status = if task.is_completed { "✓" } else { " " };
-            let selected = if i == app_state.selected_index { ">" } else { " " };
+            let selected = if i == app_state.selected_index {
+                ">"
+            } else {
+                " "
+            };
             println!("{} [{}] {}", selected, status, task.content);
         }
-        
+
         Ok(())
     }
 
