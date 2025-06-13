@@ -36,6 +36,7 @@ pub struct Due {
     pub timezone: Option<String>,
 }
 
+#[derive(Clone)]
 pub struct TodoistClient {
     api_token: String,
     base_url: String,

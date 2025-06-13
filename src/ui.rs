@@ -73,16 +73,21 @@ impl UI {
     /// Main UI loop - handles events and rendering
     pub async fn run(
         &mut self,
-        app_state: &mut crate::state::AppState,
-        client: &crate::api::TodoistClient,
+        app_state: std::sync::Arc<tokio::sync::Mutex<crate::state::AppState>>,
+        client: std::sync::Arc<crate::api::TodoistClient>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         loop {
-            // Update list state to match app state
-            self.list_state.select(Some(app_state.selected_index));
+            {
+                // Lock state for rendering
+                let state = app_state.lock().await;
+                self.list_state.select(Some(state.selected_index));
+            }
 
             // Render
             self.terminal.draw(|f| {
-                Self::render_ui(&mut self.list_state, f, app_state);
+                // For rendering, obtain a lock snapshot
+                let state = futures::executor::block_on(app_state.lock());
+                Self::render_ui(&mut self.list_state, f, &state);
             })?;
 
             // Handle input
@@ -90,55 +95,87 @@ impl UI {
                 if key.kind == KeyEventKind::Press {
                     match key.code {
                         KeyCode::Char('q') => break,
-                        KeyCode::Char('j') | KeyCode::Down => app_state.move_down(),
-                        KeyCode::Char('k') | KeyCode::Up => app_state.move_up(),
-                        KeyCode::Char('G') => app_state.go_to_bottom(),
+                        KeyCode::Char('j') | KeyCode::Down => {
+                            let mut state = app_state.lock().await;
+                            state.move_down();
+                        },
+                        KeyCode::Char('k') | KeyCode::Up => {
+                            let mut state = app_state.lock().await;
+                            state.move_up();
+                        },
+                        KeyCode::Char('G') => {
+                            let mut state = app_state.lock().await;
+                            state.go_to_bottom();
+                        },
                         KeyCode::Char('g') => {
-                            // Handle gg - go to top (simplified for now)
-                            app_state.go_to_top();
-                        }
-                        KeyCode::Char(' ') => app_state.toggle_selected_task(),
+                            let mut state = app_state.lock().await;
+                            state.go_to_top();
+                        },
+                        KeyCode::Char(' ') => {
+                            let mut state = app_state.lock().await;
+                            state.toggle_selected_task();
+                        },
                         KeyCode::Char('r') => {
-                            // Indicate refresh is starting.
-                            app_state.sync_status = crate::state::SyncStatus::Syncing;
-
-                            // Wrap active task refresh with timeout.
-                            match timeout(Duration::from_secs(5), client.get_todays_tasks()).await {
-                                Ok(Ok(tasks)) => {
-                                    app_state.load_tasks(tasks);
-                                    app_state.sync_status = crate::state::SyncStatus::Online;
-                                }
-                                Ok(Err(e)) => {
-                                    eprintln!("Error refreshing tasks: {}", e);
-                                    app_state.sync_status = crate::state::SyncStatus::Error(e.to_string());
-                                }
-                                Err(_) => {
-                                    eprintln!("Refresh tasks timed out");
-                                    app_state.sync_status = crate::state::SyncStatus::Error("Timeout".to_string());
-                                }
+                            {
+                                // Immediately mark state as syncing
+                                let mut state = app_state.lock().await;
+                                state.sync_status = crate::state::SyncStatus::Syncing;
                             }
-                            // Refresh completed tasks similarly.
-                            match timeout(Duration::from_secs(5), client.get_todays_completed_tasks()).await {
-                                Ok(Ok(completed)) => {
-                                    app_state.load_completed_tasks(completed);
+                            // Spawn a background task for refresh so UI rendering is not blocked
+                            let app_state_clone = app_state.clone();
+                            let client_clone = client.clone();
+                            tokio::spawn(async move {
+                                use tokio::time::timeout;
+                                use tokio::time::Duration;
+                                // Refresh active tasks with timeout
+                                let active_result = timeout(
+                                    Duration::from_secs(5),
+                                    client_clone.get_todays_tasks(),
+                                ).await;
+                                // Refresh completed tasks with timeout
+                                let completed_result = timeout(
+                                    Duration::from_secs(5),
+                                    client_clone.get_todays_completed_tasks(),
+                                ).await;
+                                let mut state = app_state_clone.lock().await;
+                                match active_result {
+                                    Ok(Ok(tasks)) => {
+                                        state.load_tasks(tasks);
+                                        state.sync_status = crate::state::SyncStatus::Online;
+                                    }
+                                    Ok(Err(e)) => {
+                                        eprintln!("Error refreshing tasks: {}", e);
+                                        state.sync_status = crate::state::SyncStatus::Error(e.to_string());
+                                    }
+                                    Err(_) => {
+                                        eprintln!("Refresh tasks timed out");
+                                        state.sync_status = crate::state::SyncStatus::Error("Timeout".to_string());
+                                    }
                                 }
-                                Ok(Err(e)) => {
-                                    eprintln!("Error refreshing completed tasks: {}", e);
+                                match completed_result {
+                                    Ok(Ok(completed)) => {
+                                        state.load_completed_tasks(completed);
+                                    }
+                                    Ok(Err(e)) => {
+                                        eprintln!("Error refreshing completed tasks: {}", e);
+                                    }
+                                    Err(_) => {
+                                        eprintln!("Refresh completed tasks timed out");
+                                    }
                                 }
-                                Err(_) => {
-                                    eprintln!("Refresh completed tasks timed out");
-                                }
-                            }
-                        }
+                            });
+                        },
                         KeyCode::Char('/') => {
-                            app_state.start_search();
+                            let mut state = app_state.lock().await;
+                            state.start_search();
                             // TODO: Implement search input mode
-                        }
+                        },
                         KeyCode::Esc => {
-                            if app_state.is_searching {
-                                app_state.end_search();
+                            let mut state = app_state.lock().await;
+                            if state.is_searching {
+                                state.end_search();
                             }
-                        }
+                        },
                         _ => {}
                     }
                 }
